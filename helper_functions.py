@@ -25,7 +25,7 @@ def apply_shift(ct_numbers, shift_id):
     return np.remainder(ct_numbers, 29)
 
 
-class best_key_storage:
+class BestKeyStorage:
     def __init__(self):
         self.store = []
         self.N = 1000
@@ -53,12 +53,10 @@ def decryption_autokey(key, ct_numbers, current_interrupter):
     counter = 0
     index = 0
     key_shape = key.shape
-    if len(key_shape) == 1:
-        key_length = key_shape[0]
-        mt = np.zeros((1, len(ct_numbers)), dtype=int)
-    else:
-        key_length = key_shape[1]
-        mt = np.zeros((29, len(ct_numbers)), dtype=int)
+    key_length = key_shape[1]
+    mt = np.zeros((key_shape[0], len(ct_numbers)), dtype=int)
+    keys = np.zeros((key_shape[0], key_length), dtype=int)
+    keys[:] = key
     mt[:] = ct_numbers
 
     if np.sum(current_interrupter[0:len(key)]) == 0:
@@ -69,7 +67,7 @@ def decryption_autokey(key, ct_numbers, current_interrupter):
             if current_interrupter[index] == 1:
                 index += 1
                 continue
-            mt[:, index] = (mt[:, index] - key[counter]) % 29
+            mt[:, index] = (mt[:, index] - keys[:, counter]) % 29
             index += 1
             counter += 1
 
@@ -87,14 +85,9 @@ def decryption_autokey(key, ct_numbers, current_interrupter):
 def decryption_vigenere(key, ct_numbers, current_interrupter):
     counter = 0
     key_shape = key.shape
-    if len(key_shape) == 1:
-        key_length = key_shape[0]
-        mt = np.zeros((1, len(ct_numbers)), dtype=int)
-        keys = np.zeros((1, key_shape[0]), dtype=int)
-    else:
-        key_length = key_shape[1]
-        mt = np.zeros((29, len(ct_numbers)), dtype=int)
-        keys = np.zeros((29, key_shape[1]), dtype=int)
+    key_length = key_shape[1]
+    mt = np.zeros((key_shape[0], len(ct_numbers)), dtype=int)
+    keys = np.zeros((key_shape[0], key_length), dtype=int)
     keys[:] = key
     mt[:] = ct_numbers
 
@@ -134,16 +127,10 @@ def calculate_fitness(childkey, ct_numbers, probabilities, algorithm, current_in
     if reversed_text:
         mt = mt[::-1]
 
-    x = 29
     key_shape = childkey.shape
-    if len(key_shape) == 1:
-        x = 1
-    score = np.zeros(x)
-    for k in range(x):
-        if x == 1:
-            mt_slice = np.squeeze(mt)
-        else:
-            mt_slice = mt[k]
+    score = np.zeros(key_shape[0])
+    for k in range(key_shape[0]):
+        mt_slice = mt[k]
         indices = np.array([mt_slice[0:len(mt_slice) - 3] * 24389, mt_slice[1:len(mt_slice) - 2] * 841, mt_slice[2:len(mt_slice) - 1] * 29,
                             mt_slice[3:len(mt_slice)]])
         score[k] = np.sum(probabilities[np.sum(indices, axis=0)])
