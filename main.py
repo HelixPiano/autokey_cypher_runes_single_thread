@@ -8,16 +8,15 @@ import cProfile
 
 def main():
     start = timeit.default_timer()
-    algorithm = 0  # Vigenere, Autokey, Autokey Ciphertext
+    algorithm = 1  # Vigenere, Autokey, Autokey Ciphertext
     shift_id = 0  # 0 Without #1 +Totient shift, #2 -Totient shift, #3 +prime shift, #4 -prime shift, #5 +index shift, #6 -index shift
     reversed_text = False
     reverse_gematria = False
     interrupter = 0
 
-    ct_numbers = lp_text.get_koan2_text()
+    ct_numbers = lp_text.get_hollow_text()
     ct_interrupters = np.int8((ct_numbers == interrupter))
     number_of_interrupters = sum(ct_interrupters)
-    interrupters = np.zeros((pow(2, number_of_interrupters), len(ct_numbers)), dtype=np.uint8)
 
     if reversed_text:
         ct_numbers = ct_numbers[::-1]
@@ -29,19 +28,15 @@ def main():
     if reverse_gematria:
         probabilities = probabilities[::-1]
 
-    for index in range(pow(2, number_of_interrupters)):
-        my_dude = np.copy(ct_interrupters)
-        bit_rep = bin(int(index))[2:].zfill(number_of_interrupters)
-        my_dude[my_dude == 1] = np.array(list(bit_rep))
-        interrupters[index] = my_dude
-
     best_keys = hpf.BestKeyStorage()
 
     for counting in range(pow(2, number_of_interrupters)):
-        current_interrupter = interrupters[counting]
+        current_interrupter = np.copy(ct_interrupters)
+        bit_rep = bin(int(counting))[2:].zfill(number_of_interrupters)
+        current_interrupter[ct_interrupters == 1] = np.array(list(bit_rep))
         best_score_ever = -1000000.0
         best_key_ever = []
-        for key_length in range(13, 14):
+        for key_length in range(2, 20):
             parent_key = np.random.randint(28, size=(1, key_length))  # np.array([[0, 10, 4, 0, 1, 19, 0, 18, 4, 18, 9, 0, 18]])
             parent_score = hpf.calculate_fitness(parent_key, ct_numbers, probabilities, algorithm,
                                                  current_interrupter, reversed_text)

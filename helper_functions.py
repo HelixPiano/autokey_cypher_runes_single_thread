@@ -49,21 +49,18 @@ def read_data_from_file(file_name):
     return probabilities
 
 
-def decryption_autokey(key, ct_numbers, current_interrupter):
+def decryption_autokey(keys, ct_numbers, current_interrupter):
     counter = 0
     index = 0
-    key_shape = key.shape
+    key_shape = keys.shape
     key_length = key_shape[1]
-    mt = np.zeros((key_shape[0], len(ct_numbers)), dtype=int)
-    keys = np.zeros((key_shape[0], key_length), dtype=int)
-    keys[:] = key
-    mt[:] = ct_numbers
+    mt = np.repeat(ct_numbers[None], key_shape[0], axis=0)
 
-    if np.sum(current_interrupter[0:len(key)]) == 0:
-        mt[:, 0:key_length] = (mt[:, 0:key_length] - key) % 29
+    if np.sum(current_interrupter[0:len(keys)]) == 0:
+        mt[:, 0:key_length] = (mt[:, 0:key_length] - keys) % 29
         index = key_length
     else:
-        while counter < key.shape[1]:
+        while counter < keys.shape[1]:
             if current_interrupter[index] == 1:
                 index += 1
                 continue
@@ -72,7 +69,6 @@ def decryption_autokey(key, ct_numbers, current_interrupter):
             counter += 1
 
     position = 0
-
     for i in range(index, len(ct_numbers)):
         if current_interrupter[i] == 1:
             continue
@@ -127,13 +123,10 @@ def calculate_fitness(childkey, ct_numbers, probabilities, algorithm, current_in
     if reversed_text:
         mt = mt[::-1]
 
-    key_shape = childkey.shape
-    score = np.zeros(key_shape[0])
-    for k in range(key_shape[0]):
-        mt_slice = mt[k]
-        indices = np.array([mt_slice[0:len(mt_slice) - 3] * 24389, mt_slice[1:len(mt_slice) - 2] * 841, mt_slice[2:len(mt_slice) - 1] * 29,
-                            mt_slice[3:len(mt_slice)]])
-        score[k] = np.sum(probabilities[np.sum(indices, axis=0)])
+    len_ciphertext = mt.shape[1]
+    indices = np.array(
+        [mt[:, 0:len_ciphertext - 3] * 24389, mt[:, 1:len_ciphertext - 2] * 841, mt[:, 2:len_ciphertext - 1] * 29, mt[:, 3:len_ciphertext]])
+    score = np.sum(probabilities[np.sum(indices, axis=0)], axis=1)
     return score
 
 
