@@ -56,15 +56,15 @@ def decryption_autokey(keys, ct_numbers, current_interrupter):
     key_length = key_shape[1]
     mt = np.repeat(ct_numbers[None], key_shape[0], axis=0)
 
-    if np.sum(current_interrupter[0:len(keys)]) == 0:
-        mt[:, 0:key_length] = (mt[:, 0:key_length] - keys) % 29
+    if np.sum(current_interrupter[0:key_length]) == 0:
+        mt[:, 0:key_length] = (mt[:, 0:key_length] + keys) % 29
         index = key_length
     else:
         while counter < keys.shape[1]:
             if current_interrupter[index] == 1:
                 index += 1
                 continue
-            mt[:, index] = (mt[:, index] - keys[:, counter]) % 29
+            mt[:, index] = (mt[:, index] + keys[:, counter]) % 29
             index += 1
             counter += 1
 
@@ -72,20 +72,17 @@ def decryption_autokey(keys, ct_numbers, current_interrupter):
     for i in range(index, len(ct_numbers)):
         if current_interrupter[i] == 1:
             continue
-        mt[:, i] = (mt[:, i] - mt[:, position]) % 29
+        mt[:, i] = (mt[:, i] + mt[:, position]) % 29
         position += 1
 
     return mt
 
 
-def decryption_vigenere(key, ct_numbers, current_interrupter):
+def decryption_vigenere(keys, ct_numbers, current_interrupter):
     counter = 0
-    key_shape = key.shape
+    key_shape = keys.shape
     key_length = key_shape[1]
-    mt = np.zeros((key_shape[0], len(ct_numbers)), dtype=int)
-    keys = np.zeros((key_shape[0], key_length), dtype=int)
-    keys[:] = key
-    mt[:] = ct_numbers
+    mt = np.repeat(ct_numbers[None], key_shape[0], axis=0)
 
     for index in range(len(ct_numbers)):
         if current_interrupter[index]:
@@ -96,27 +93,12 @@ def decryption_vigenere(key, ct_numbers, current_interrupter):
     return mt
 
 
-def decryption_autokey_ciphertext(childkey, ct_numbers):
-    key_shape = childkey.shape
-    if len(key_shape) == 1:
-        key_text = np.concatenate((childkey, ct_numbers[0:(len(ct_numbers) - key_shape[0])]))
-    else:
-        len_ct_numbers = len(ct_numbers)
-        ct = np.zeros((29, len_ct_numbers), dtype=int)
-        ct[:] = ct_numbers
-        key_text = np.concatenate((childkey, ct[:, 0:(len(ct_numbers) - key_shape[1])]), axis=1)
-
-    return np.subtract(ct_numbers, key_text) % 29
-
-
 def calculate_fitness(childkey, ct_numbers, probabilities, algorithm, current_interrupter, reversed_text):
     mt = None
     if algorithm == 0:
         mt = decryption_vigenere(childkey, ct_numbers, current_interrupter)
     if algorithm == 1:
         mt = decryption_autokey(childkey, ct_numbers, current_interrupter)
-    if algorithm == 2:
-        mt = decryption_autokey_ciphertext(childkey, ct_numbers)
     if mt is None:
         raise AssertionError()
 
@@ -146,7 +128,5 @@ def translate_best_text(algorithm, best_key_ever, ct_numbers, current_interrupte
         return translate_to_english(decryption_vigenere(best_key_ever, ct_numbers, current_interrupter), reverse_gematria)
     if algorithm == 1:
         return translate_to_english(decryption_autokey(best_key_ever, ct_numbers, current_interrupter), reverse_gematria)
-    if algorithm == 2:
-        return translate_to_english(decryption_autokey_ciphertext(best_key_ever, ct_numbers), reverse_gematria)
     else:
         print('Invlaid algorithm ID')
