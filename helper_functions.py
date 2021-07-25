@@ -103,7 +103,7 @@ def calculate_fitness(childkey, ct_numbers, probabilities, algorithm, current_in
         raise AssertionError()
 
     if reversed_text:
-        mt = mt[::-1]
+        mt = mt[:, ::-1]
 
     len_ciphertext = mt.shape[1]
     indices = np.array(

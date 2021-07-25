@@ -10,8 +10,8 @@ def main():
     start = timeit.default_timer()
     algorithm = 1  # Vigenere, Autokey, Autokey Ciphertext
     shift_id = 0  # 0 Without #1 +Totient shift, #2 -Totient shift, #3 +prime shift, #4 -prime shift, #5 +index shift, #6 -index shift
-    reversed_text = False
-    reverse_gematria = False
+    reversed_text = True
+    reverse_gematria = True
     interrupter = 0
 
     ct_numbers = lp_text.get_hollow_text()
