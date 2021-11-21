@@ -33,11 +33,11 @@ def main():
     for counting in range(pow(2, number_of_interrupters)):
         current_interrupter = np.copy(ct_interrupters)
         bit_rep = bin(int(counting))[2:].zfill(number_of_interrupters)
-        current_interrupter[ct_interrupters == 1] = np.array(list(bit_rep))
+        current_interrupter[ct_interrupters == 1] = np.array(list(map(int, bit_rep)))
         best_score_ever = -1000000.0
         best_key_ever = []
         for key_length in range(1, 20):
-            parent_key = np.random.randint(28, size=(1, key_length))  # np.array([[0, 10, 4, 0, 1, 19, 0, 18, 4, 18, 9, 0, 18]])
+            parent_key = np.random.randint(28, size=(1, key_length))
             parent_score = hpf.calculate_fitness(parent_key, ct_numbers, probabilities, algorithm,
                                                  current_interrupter, reversed_text)
 
