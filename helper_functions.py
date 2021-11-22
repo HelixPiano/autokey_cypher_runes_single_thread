@@ -288,23 +288,19 @@ prime = np.array(
 
 def apply_shift(ct_numbers: npt.ArrayLike, shift_id: npt.ArrayLike) -> np.ndarray:
     if shift_id == 1:
-        for index in range(len(ct_numbers)):
-            ct_numbers[index] += prime[index + 1] - 1
+        ct_numbers += prime[0:ct_numbers.shape[1]] - 1
     elif shift_id == 2:
-        for index in range(len(ct_numbers)):
-            ct_numbers[index] -= prime[index + 1] - 1
+        ct_numbers -= prime[0:ct_numbers.shape[1]] - 1
     elif shift_id == 3:
-        for index in range(len(ct_numbers)):
-            ct_numbers[index] += prime[index + 1]
+        ct_numbers += prime[0:ct_numbers.shape[1]]
     elif shift_id == 4:
-        for index in range(len(ct_numbers)):
-            ct_numbers[index] -= prime[index + 1]
+        ct_numbers -= prime[0:ct_numbers.shape[1]]
     elif shift_id == 5:
-        for index in range(len(ct_numbers)):
-            ct_numbers[index] += index
+        for index in range(ct_numbers.shape[1]):
+            ct_numbers[:, index] += index
     elif shift_id == 6:
-        for index in range(len(ct_numbers)):
-            ct_numbers[index] -= index
+        for index in range(ct_numbers.shape[1]):
+            ct_numbers[:, index] -= index
     return np.remainder(ct_numbers, 29)
 
 
