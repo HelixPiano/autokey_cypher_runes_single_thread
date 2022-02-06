@@ -9,6 +9,8 @@ def apply_shift(ct_numbers: npt.ArrayLike, shift_id: npt.ArrayLike, interrupter_
     shift_index = 0
 
     prime = numpy_prime_array()
+    if len(ct_numbers.shape) == 1:
+        ct_numbers = np.array([ct_numbers])
 
     if shift_id == 1:
         for index in range(ct_numbers.shape[1]):
@@ -146,13 +148,16 @@ def translate_to_english(parent_key: npt.ArrayLike, reverse_gematria: bool) -> s
 
 
 def translate_best_text(algorithm: int, best_key_ever: npt.ArrayLike, ct_numbers: npt.ArrayLike, current_interrupter: npt.ArrayLike,
-                        reverse_gematria: bool) -> str:
+                        reverse_gematria: bool, shift_id: int) -> str:
     if algorithm == 0:
-        return translate_to_english(decryption_vigenere(best_key_ever, ct_numbers, current_interrupter), reverse_gematria)
-    if algorithm == 1:
-        return translate_to_english(decryption_autokey(best_key_ever, ct_numbers, current_interrupter), reverse_gematria)
+        mt = decryption_vigenere(best_key_ever, ct_numbers, current_interrupter)
+    elif algorithm == 1:
+        mt = decryption_autokey(best_key_ever, ct_numbers, current_interrupter)
     else:
         print('Invalid algorithm ID')
+    if shift_id > 0:
+        mt = apply_shift(mt, shift_id, current_interrupter)
+    return translate_to_english(mt, reverse_gematria)
 
 
 def finding_keys(counting: int, ct_numbers: npt.ArrayLike, ct_interrupters: npt.ArrayLike, number_of_interrupters: int,
@@ -165,7 +170,9 @@ def finding_keys(counting: int, ct_numbers: npt.ArrayLike, ct_interrupters: npt.
 
     for key_length in range(1, 20):
 
-        parent_key = np.random.randint(28, size=(1, key_length))
+        parent_key = np.random.randint(28, size=(1, key_length))  # np.array([0, 10, 15, 8, 18, 4, 19, 24, 9])  #
+        current_interrupter = np.asarray(ct_numbers == 6, dtype=int)
+
         parent_score = calculate_fitness(parent_key, ct_numbers, probabilities, algorithm, current_interrupter, reversed_text, shift_id)
 
         still_improving = True
@@ -190,7 +197,7 @@ def finding_keys(counting: int, ct_numbers: npt.ArrayLike, ct_interrupters: npt.
                 best_key_ever = parent_key
             else:
                 still_improving = False
-                best_text = translate_best_text(algorithm, best_key_ever, ct_numbers, current_interrupter, reverse_gematria)
+                best_text = translate_best_text(algorithm, best_key_ever, ct_numbers, current_interrupter, reverse_gematria, shift_id)
                 key_translated = translate_to_english(best_key_ever, reverse_gematria)
                 best_keys.add((best_score_ever, best_key_ever.shape[1], best_key_ever, best_text, key_translated))
     print(counting)

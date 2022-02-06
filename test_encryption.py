@@ -2,6 +2,7 @@ from unittest import TestCase
 import numpy as np
 import encryption as enc
 import testing_texts as tt
+import helper_functions as hpf
 
 
 class TestEncryption(TestCase):
@@ -37,7 +38,9 @@ class TestEncryption(TestCase):
         ct = plaintext.copy()
         key = np.array([18, 9, 20, 10, 6, 8, 16, 18, 9, 19, 18, 9, 16, 24, 7, 24, 10, 16, 15])
         ct_autokey = enc.autokey_encryption(ct, interrupter, key)
-        np.testing.assert_array_equal(ct_autokey, tt.test_autokey_encryption_ct())
+        interrupter_array = np.asarray(plaintext == interrupter, dtype=int)
+        solved = hpf.decryption_autokey(key, ct_autokey, interrupter_array)
+        np.testing.assert_array_equal(solved.squeeze(), plaintext)
 
     def test_translate_to_english(self):
         self.assertEqual(enc.translate_to_english(np.array([0, 10, 4, 0, 1, 19, 0, 18, 4, 18, 9, 0, 18]), reverse_gematria=False).upper(),
@@ -57,7 +60,8 @@ class TestEncryption(TestCase):
         reverse_text = False
         reverse_gematria = False
         shift_id = 0
-        ct = enc.encrypt_text(plaintext, algorithm, shift_id, reverse_text, reverse_gematria, interrupter, key)
+        interrupter_array = np.asarray(plaintext == interrupter, dtype=int)
+        ct = enc.encrypt_text(plaintext, algorithm, shift_id, reverse_text, reverse_gematria, interrupter, key, interrupter_array)
         np.testing.assert_array_equal(tt.get_koan2_text(), ct)
 
     def test_shift_add_totient(self):
@@ -97,4 +101,4 @@ class TestEncryption(TestCase):
         np.testing.assert_array_equal(ct, np.array([1, 1, 1, 1, 1, 0, 1, 1, 1, 1]))
 
 # TODO Add encryption that tests combination of shift+autokey/vigenere
-# TODO Test Autokey encryption that uses interrupters
+# TODO Test Autokey encryption that uses interrupters without relying on hpf to cross check

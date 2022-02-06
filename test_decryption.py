@@ -57,7 +57,7 @@ class TestDecryption(TestCase):
         ciphertext = enc.encrypt_text(plaintext=ct_numbers, algorithm='Autokey', shift_id=0, reverse_text=False, reverse_gematria=False,
                                       interrupter=interrupter, key=np.array([0, 10, 15, 8, 18, 4, 19, 24, 9]),
                                       interrupter_array=interrupter_array)
-        hpf.main(algorithm=1, shift_id=1, reversed_text=False, reverse_gematria=False, interrupter=interrupter, ciphertext=ciphertext)
+        hpf.main(algorithm=1, shift_id=0, reversed_text=False, reverse_gematria=False, interrupter=interrupter, ciphertext=ciphertext)
         df = pd.read_csv('keys.txt', sep=',')
         self.assertEqual(hpf.translate_to_english(tt.get_koan2_plaintext(), reverse_gematria=False), df.loc[0, 'Message text'])
 
@@ -68,7 +68,7 @@ class TestDecryption(TestCase):
         ciphertext = enc.encrypt_text(plaintext=ct_numbers, algorithm='Autokey', shift_id=1, reverse_text=False, reverse_gematria=False,
                                       interrupter=interrupter, key=np.array([0, 10, 15, 8, 18, 4, 19, 24, 9]),
                                       interrupter_array=interrupter_array)
-        hpf.main(algorithm=1, shift_id=1, reversed_text=False, reverse_gematria=False, interrupter=interrupter, ciphertext=ciphertext)
+        hpf.main(algorithm=1, shift_id=2, reversed_text=False, reverse_gematria=False, interrupter=interrupter, ciphertext=ciphertext)
         df = pd.read_csv('keys.txt', sep=',')
         self.assertEqual(hpf.translate_to_english(tt.get_koan2_plaintext(), reverse_gematria=False), df.loc[0, 'Message text'])
 
@@ -126,5 +126,3 @@ class TestDecryption(TestCase):
         hpf.main(algorithm=1, shift_id=6, reversed_text=False, reverse_gematria=False, interrupter=interrupter, ciphertext=ciphertext)
         df = pd.read_csv('keys.txt', sep=',')
         self.assertEqual(hpf.translate_to_english(tt.get_koan2_plaintext(), reverse_gematria=False), df.loc[0, 'Message text'])
-
-# TODO Add test with autokey and interrupter, but without shift
