@@ -79,6 +79,8 @@ def atbash(plaintext):
 
 
 def apply_shift(ct_numbers, interrupter, shift_id):
+    # Indices 1-2, 3-4, and 5-6 are swapped, so that decryption undoes the encryption operation.
+    # So Index 1 in encryption is the inverse operation of Index 1 in decryption
     shift_index = 0
     prime = pa.numpy_prime_array()
 
@@ -86,37 +88,37 @@ def apply_shift(ct_numbers, interrupter, shift_id):
         for index, element in enumerate(ct_numbers):
             if element == interrupter:
                 continue
-            ct_numbers[index] += prime[shift_index] - 1
+            ct_numbers[index] -= prime[shift_index] - 1
             shift_index += 1
     elif shift_id == 2:
         for index, element in enumerate(ct_numbers):
             if element == interrupter:
                 continue
-            ct_numbers[index] -= prime[shift_index] - 1
+            ct_numbers[index] += prime[shift_index] - 1
             shift_index += 1
     elif shift_id == 3:
         for index, element in enumerate(ct_numbers):
             if element == interrupter:
                 continue
-            ct_numbers[index] += prime[shift_index]
+            ct_numbers[index] -= prime[shift_index]
             shift_index += 1
     elif shift_id == 4:
         for index, element in enumerate(ct_numbers):
             if element == interrupter:
                 continue
-            ct_numbers[index] -= prime[shift_index]
+            ct_numbers[index] += prime[shift_index]
             shift_index += 1
     elif shift_id == 5:
         for index, element in enumerate(ct_numbers):
             if element == interrupter:
                 continue
-            ct_numbers[index] += shift_index
+            ct_numbers[index] -= shift_index
             shift_index += 1
     elif shift_id == 6:
         for index, element in enumerate(ct_numbers):
             if element == interrupter:
                 continue
-            ct_numbers[index] -= shift_index
+            ct_numbers[index] += shift_index
             shift_index += 1
     return np.remainder(ct_numbers, 29)
 

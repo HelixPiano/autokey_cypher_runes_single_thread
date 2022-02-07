@@ -6,48 +6,31 @@ import pandas as pd
 
 
 def apply_shift(ct_numbers: npt.ArrayLike, shift_id: npt.ArrayLike, interrupter_array) -> np.ndarray:
-    shift_index = 0
-
     prime = numpy_prime_array()
     if len(ct_numbers.shape) == 1:
         ct_numbers = np.array([ct_numbers])
 
+    indices = np.flatnonzero(np.logical_not(interrupter_array))
+    shift_array = np.zeros(ct_numbers.shape, dtype=int)
+
     if shift_id == 1:
-        for index in range(ct_numbers.shape[1]):
-            if interrupter_array[index]:
-                continue
-            ct_numbers[:, index] += prime[shift_index] - 1
-            shift_index += 1
+        shift_array[:, indices] = prime[0:len(indices)] - 1
+        ct_numbers = ct_numbers + shift_array
     elif shift_id == 2:
-        for index in range(ct_numbers.shape[1]):
-            if interrupter_array[index]:
-                continue
-            ct_numbers[:, index] -= prime[shift_index] - 1
-            shift_index += 1
+        shift_array[:, indices] = prime[0:len(indices)] - 1
+        ct_numbers = ct_numbers - shift_array
     elif shift_id == 3:
-        for index in range(ct_numbers.shape[1]):
-            if interrupter_array[index]:
-                continue
-            ct_numbers[:, index] += prime[shift_index]
-            shift_index += 1
+        shift_array[:, indices] = prime[0:len(indices)]
+        ct_numbers = ct_numbers + shift_array
     elif shift_id == 4:
-        for index in range(ct_numbers.shape[1]):
-            if interrupter_array[index]:
-                continue
-            ct_numbers[:, index] -= prime[shift_index]
-            shift_index += 1
+        shift_array[:, indices] = prime[0:len(indices)]
+        ct_numbers = ct_numbers - shift_array
     elif shift_id == 5:
-        for index in range(ct_numbers.shape[1]):
-            if interrupter_array[index]:
-                continue
-            ct_numbers[index] += shift_index
-            shift_index += 1
+        shift_array[:, indices] = indices
+        ct_numbers = ct_numbers + shift_array
     elif shift_id == 6:
-        for index in range(ct_numbers.shape[1]):
-            if interrupter_array[index]:
-                continue
-            ct_numbers[index] -= shift_index
-            shift_index += 1
+        shift_array[:, indices] = indices
+        ct_numbers = ct_numbers - shift_array
     return np.remainder(ct_numbers, 29)
 
 
@@ -63,18 +46,31 @@ class BestKeyStorage:
 
 
 def read_data_from_file(file_name: str) -> np.ndarray:
-    with open(file_name) as f:
-        lines = f.readlines()
-
-    results = [line.split(',')[4] for line in lines]
-    probabilities = np.zeros(len(results), dtype=float)
-    for index, item in enumerate(results):
-        probabilities[index] = float(item.replace('\n', ''))
-
-    return probabilities
+    df = pd.read_csv(file_name, sep=',', header=None)
+    return df[4].to_numpy()
 
 
 def decryption_autokey(keys: npt.ArrayLike, ct_numbers: npt.ArrayLike, current_interrupter: npt.ArrayLike) -> np.ndarray:
+    mt = ct_numbers.copy()
+
+    len_keys = keys.shape[1]
+    indices = np.flatnonzero(np.logical_not(current_interrupter))
+
+    mt[:, 0:len_keys] = np.remainder(mt[:, 0:len_keys] - keys[:, indices[0:len_keys]], 29)
+    step_size = np.arange(len_keys, indices.shape[0], len_keys)
+
+    if step_size[-1] != mt.shape[1]:
+        step_size = np.concatenate(step_size, indices.shape[0])
+
+    diff_step_size = np.cumsum(np.concatenate(([0], np.diff(step_size))))
+
+    for index in range(step_size.shape[0] - 1):
+        mt[:, indices[step_size[index]:step_size[index + 1]]] = \
+            np.remainder(mt[:, indices[step_size[index]:step_size[index + 1]]] - mt[:, diff_step_size[index]:diff_step_size[index + 1]], 29)
+    return mt
+
+
+def decryption_vigenere(keys: npt.ArrayLike, ct_numbers: npt.ArrayLike, current_interrupter: npt.ArrayLike) -> np.ndarray:
     mt = ct_numbers.copy()
 
     if len(mt.shape) == 1:
@@ -83,52 +79,25 @@ def decryption_autokey(keys: npt.ArrayLike, ct_numbers: npt.ArrayLike, current_i
         keys = np.array([keys])
 
     len_keys = keys.shape[1]
+
     indices = np.flatnonzero(np.logical_not(current_interrupter))
-
-    for s, t in enumerate(indices[0:len_keys]):
-        mt[:, t] = (mt[:, t] - keys[:, s]) % 29
-
-    step_size = np.arange(len_keys, indices.shape[0], len_keys)
-
-    if step_size[-1] != mt.shape[1]:
-        step_size = np.append(step_size, indices.shape[0])
-
-    diff_step_size = np.cumsum(np.concatenate(([0], np.diff(step_size))))
-
-    for index in range(len(step_size) - 1):
-        mt[:, indices[step_size[index]:step_size[index + 1]]] = \
-            (mt[:, indices[step_size[index]:step_size[index + 1]]] - mt[:, diff_step_size[index]:diff_step_size[index + 1]]) % 29
-    return mt
-
-
-def decryption_vigenere(keys: npt.ArrayLike, ct_numbers: npt.ArrayLike, current_interrupter: npt.ArrayLike) -> np.ndarray:
-    counter = 0
-    key_shape = keys.shape
-    key_length = key_shape[1]
-    mt = np.tile(ct_numbers, (key_shape[0], 1))
-
-    for index in range(len(ct_numbers)):
-        if current_interrupter[index]:
-            continue
-        else:
-            mt[:, index] = (mt[:, index] - keys[:, counter % key_length]) % 29
-            counter += 1
-    return mt
+    for s, t in enumerate(indices):
+        mt[:, t] = (mt[:, t] - keys[:, s % len_keys])
+    return np.remainder(mt, 29)
 
 
 def calculate_fitness(childkey: npt.ArrayLike, ct_numbers: npt.ArrayLike, probabilities: npt.ArrayLike, algorithm: int,
                       current_interrupter: npt.ArrayLike, reversed_text: bool, shift_id: int) -> np.ndarray:
     if algorithm == 0:
         mt = decryption_vigenere(childkey, ct_numbers, current_interrupter)
-    elif algorithm == 1:
-        mt = decryption_autokey(childkey, ct_numbers, current_interrupter)
     else:
-        raise AssertionError()
+        mt = decryption_autokey(childkey, ct_numbers, current_interrupter)
 
     if shift_id > 0:
         mt = apply_shift(mt, shift_id, current_interrupter)
     if reversed_text:
         mt = mt[:, ::-1]
+
     len_ciphertext = mt.shape[1]
     indices = np.array(
         [mt[:, 0:len_ciphertext - 3] * 24389, mt[:, 1:len_ciphertext - 2] * 841, mt[:, 2:len_ciphertext - 1] * 29, mt[:, 3:len_ciphertext]])
@@ -151,10 +120,9 @@ def translate_best_text(algorithm: int, best_key_ever: npt.ArrayLike, ct_numbers
                         reverse_gematria: bool, shift_id: int) -> str:
     if algorithm == 0:
         mt = decryption_vigenere(best_key_ever, ct_numbers, current_interrupter)
-    elif algorithm == 1:
-        mt = decryption_autokey(best_key_ever, ct_numbers, current_interrupter)
     else:
-        print('Invalid algorithm ID')
+        mt = decryption_autokey(best_key_ever, ct_numbers, current_interrupter)
+
     if shift_id > 0:
         mt = apply_shift(mt, shift_id, current_interrupter)
     return translate_to_english(mt, reverse_gematria)
@@ -170,8 +138,7 @@ def finding_keys(counting: int, ct_numbers: npt.ArrayLike, ct_interrupters: npt.
 
     for key_length in range(1, 20):
 
-        parent_key = np.random.randint(28, size=(1, key_length))  # np.array([0, 10, 15, 8, 18, 4, 19, 24, 9])  #
-        current_interrupter = np.asarray(ct_numbers == 6, dtype=int)
+        parent_key = np.random.randint(28, size=(1, key_length))
 
         parent_score = calculate_fitness(parent_key, ct_numbers, probabilities, algorithm, current_interrupter, reversed_text, shift_id)
 
@@ -212,7 +179,7 @@ def main(algorithm, shift_id, reversed_text, reverse_gematria, interrupter, ciph
     else:
         ct_numbers = ciphertext
 
-    ct_interrupters = (ct_numbers == interrupter)
+    ct_interrupters = np.asarray(ct_numbers == interrupter, dtype=bool)
     number_of_interrupters = sum(ct_interrupters)
     print(f"Number of interrupters: {number_of_interrupters}")
     if reversed_text:
@@ -222,6 +189,7 @@ def main(algorithm, shift_id, reversed_text, reverse_gematria, interrupter, ciph
     if reverse_gematria:
         probabilities = probabilities[::-1]
 
+    ct_numbers = np.array([ct_numbers])
     for counting in range(pow(2, number_of_interrupters)):
         finding_keys(counting, ct_numbers, ct_interrupters, number_of_interrupters, probabilities, algorithm, reversed_text, reverse_gematria,
                      shift_id)

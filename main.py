@@ -10,6 +10,4 @@ if __name__ == '__main__':
     stats.print_stats()
     stats.dump_stats(filename='needs_profiling.prof')
 
-# TODO: Adding Unittests to ensure that the encryptions are working as intended
-# TODO: Adding Unittests to ensure that the decryptions are working as intended
 # TODO: Add Ciphertext Autokey?

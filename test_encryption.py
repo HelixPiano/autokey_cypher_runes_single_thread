@@ -68,37 +68,37 @@ class TestEncryption(TestCase):
         interrupter = 0
         ct = np.array([1, 2, 3, 4, 5, 0, 6, 7, 8, 9])
         ct = enc.apply_shift(ct, interrupter, shift_id=1)
-        np.testing.assert_array_equal(ct, np.array([2, 4, 7, 10, 15, 0, 18, 23, 26, 2]))
+        np.testing.assert_array_equal(ct, np.array([0, 0, 28, 27, 24, 0, 23, 20, 19, 16]))
 
     def test_shift_subtract_totient(self):
         interrupter = 0
         ct = np.array([1, 2, 3, 4, 5, 0, 6, 7, 8, 9])
         ct = enc.apply_shift(ct, interrupter, shift_id=2)
-        np.testing.assert_array_equal(ct, np.array([0, 0, 28, 27, 24, 0, 23, 20, 19, 16]))
+        np.testing.assert_array_equal(ct, np.array([2, 4, 7, 10, 15, 0, 18, 23, 26, 2]))
 
     def test_shift_add_prime(self):
         interrupter = 0
         ct = np.array([1, 2, 3, 4, 5, 0, 6, 7, 8, 9])
         ct = enc.apply_shift(ct, interrupter, shift_id=3)
-        np.testing.assert_array_equal(ct, np.array([3, 5, 8, 11, 16, 0, 19, 24, 27, 3]))
+        np.testing.assert_array_equal(ct, np.array([28, 28, 27, 26, 23, 0, 22, 19, 18, 15]))
 
     def test_shift_subtract_prime(self):
         interrupter = 0
         ct = np.array([1, 2, 3, 4, 5, 0, 6, 7, 8, 9])
         ct = enc.apply_shift(ct, interrupter, shift_id=4)
-        np.testing.assert_array_equal(ct, np.array([28, 28, 27, 26, 23, 0, 22, 19, 18, 15]))
+        np.testing.assert_array_equal(ct, np.array([3, 5, 8, 11, 16, 0, 19, 24, 27, 3]))
 
     def test_shift_add_index(self):
         interrupter = 0
         ct = np.array([1, 2, 3, 4, 5, 0, 6, 7, 8, 9])
         ct = enc.apply_shift(ct, interrupter, shift_id=5)
-        np.testing.assert_array_equal(ct, np.array([1, 3, 5, 7, 9, 0, 11, 13, 15, 17]))
+        np.testing.assert_array_equal(ct, np.array([1, 1, 1, 1, 1, 0, 1, 1, 1, 1]))
 
     def test_shift_subtract_index(self):
         interrupter = 0
         ct = np.array([1, 2, 3, 4, 5, 0, 6, 7, 8, 9])
         ct = enc.apply_shift(ct, interrupter, shift_id=6)
-        np.testing.assert_array_equal(ct, np.array([1, 1, 1, 1, 1, 0, 1, 1, 1, 1]))
+        np.testing.assert_array_equal(ct, np.array([1, 3, 5, 7, 9, 0, 11, 13, 15, 17]))
 
 # TODO Add encryption that tests combination of shift+autokey/vigenere
 # TODO Test Autokey encryption that uses interrupters without relying on hpf to cross check
